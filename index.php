@@ -16,7 +16,7 @@ if ($users->signed_in()) {
 				<?php if ($users->getuserinfo('user_group') == 1) {
 					echo '<a href="./admin/" class="button button-primary">Admin Panel</a>';
 				}; ?>
-				<a href="logout.php" class="button button-blank" style="background: red; color: white;"><i class="fas fa-sign-out-alt"></i> Logout
+				<a href="logout.php" class="button button-blank" style="background: blue; color: white;"><i class="fas fa-sign-out-alt"></i> Logout
 				</a>
 			</div>
 		</div>

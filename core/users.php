@@ -5,10 +5,47 @@ class users extends db
 
     public $email_err, $password_err;
 
+    private function validate_email($email)
+    {
+        $email = trim($email);
+
+    // Check if the email is empty
+    if (empty($email)) {
+        $this->email_err = 'The email address cannot be empty.';
+        return false;
+    }
+
+    // Validate the email format
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $this->email_err = 'The email address you have entered is invalid.';
+        return false;
+    }
+
+    // Reset error message if validation passes
+    $this->email_err = '';
+    return true;
+    }
+
+    private function validate_password($password)
+    {
+        $password_regex = '/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,}$/';
+        if (!preg_match($password_regex, $password)) {
+            $this->password_err = 'The password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one special character.';
+            return false;
+        }
+        return true;
+    }
+
     public function auth($email, $password, $type)
     {
 
         $_link = $this->getDBH();
+
+        if (!$this->validate_email($email) || !$this->validate_password($password)) {
+            echo $this->email_err ?: $this->password_err;
+            return;
+        }
+
 
         if ($email != '' && $password != '' && $type != '') {
 
@@ -261,6 +298,10 @@ class users extends db
 
     public function change_password($new, $current)
     {
+        if (!$this->validate_password($new)) {
+            echo $this->password_err;
+            return;
+        }
 
         $_link = $this->getDBH();
 
@@ -291,21 +332,19 @@ class users extends db
 
     public function change_email($new)
     {
+        if (!$this->validate_email($new)) {
+            echo '<div class="alert error">' . $this->email_err . '</div>';
+            return;
+        }
 
         $_link = $this->getDBH();
 
-        if (filter_var($new, FILTER_VALIDATE_EMAIL)) {
+        $query = $_link->prepare('UPDATE `users` SET `email` = :email WHERE `id` = :id');
+        $query->bindParam(':email', $new, PDO::PARAM_STR);
+        $query->bindParam(':id', $_COOKIE['user'], PDO::PARAM_INT);
+        $query->execute();
 
-            $query = $_link->prepare('UPDATE `users` SET `email` = :email WHERE `id` = :id');
-            $query->bindParam(':email', $new, PDO::PARAM_STR);
-            $query->bindParam(':id', $_COOKIE['user'], PDO::PARAM_INT);
-            $query->execute();
-
-            echo '<div class="alert success">Your email address has been updated successfully.</div>';
-        } else {
-
-            echo '<div class="alert error">The email address you have entered is invalid.</div>';
-        }
+        echo '<div class="alert success">Your email address has been updated successfully.</div>';
     }
 
     public function idtocolumn($id, $column)
